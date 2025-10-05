@@ -28,7 +28,7 @@ RV64指令集中常用的符号说明如下:
 + rd：表示目标寄存器的编号，可以从x0～x31通用寄存器中选择。
 + rs1：表示源寄存器1的编号，可以从x0～x31通用寄存器中选择。
 + rs2：表示源寄存器2的编号，可以从x0～x31通用寄存器中选择。
-+ ()：通常用来表示寻址模式，例如，(a0)表示以a0寄存器的值为基地址进行寻址。这个前面还可以加offset，表示偏移量，可以是正数或负数。**例如，8(a0)表示以a0寄存器的值为基地址，偏移8字节进行寻址。**
++ ()：通常用来表示寻址模式，例如，(a0)表示以`a0`寄存器的值为基地址进行寻址。这个前面还可以加offset，表示偏移量，可以是正数或负数。**例如，8(a0)表示以a0寄存器的值为基地址，偏移8字节进行寻址。**
 + { }：表示可选项。
 + imm：表示有符号立即数。
 
@@ -73,10 +73,10 @@ s{d|w|h|b} rs2,  offset(rs1)
 
 | 存储指令 | 数据位宽/位 | 说明 |
 | ------- | ----------- | ---- |
-| sb rs2, offset(rs1) | 8 | 把rs2寄存器的低8位宽的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
-| sh rs2, offset(rs1) | 16 | 把rs2寄存器的低16位宽的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
-| sw rs2, offset(rs1) | 32 | 把rs2寄存器的低32位宽的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
-| sd rs2, offset(rs1) | 64 | 把rs2寄存器的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
+| `sb rs2, offset(rs1)` | 8 | 把rs2寄存器的低8位宽的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
+| `sh rs2, offset(rs1)` | 16 | 把rs2寄存器的低16位宽的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
+| `sw rs2, offset(rs1)` | 32 | 把rs2寄存器的低32位宽的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
+| `sd rs2, offset(rs1)` | 64 | 把rs2寄存器的值存储到以rs1寄存器的值为基地址加上offset的地址处 |
 
 ## PC相对寻址
 
@@ -179,24 +179,24 @@ addi  a0, a0, 0x678   # a0 = a0 + 0x678（正数）
 
 | 指令 | 指令格式 | 说明 |
 |------|----------|------|
-| and | `and rd, rs1, rs2` | 与操作指令 <br> 对rs1和rs2寄存器按位进行与操作，把结果写入rd寄存器中 |
-| andi | `andi rd, rs1, imm` | 与操作指令 <br> 对rs1寄存器和imm按位进行与操作，把结果写入rd寄存器中 |
-| or | `or rd, rs1, rs2` | 或操作指令 <br> 对rs1寄存器和rs2寄存器按位进行或操作，把结果写入rd寄存器中 |
-| ori | `ori rd, rs1, imm` | 或操作指令 <br> 对rs1寄存器和imm按位进行或操作，把结果写入rd寄存器中 |
-| xor | `xor rd, rs1, rs2` | 异或操作指令 <br> 对rs1寄存器和rs2寄存器按位进行异或操作，把结果写入rd寄存器中 |
-| xori | `xori rd, rs1, imm` | 异或操作指令 <br> 对rs1寄存器和imm按位进行异或操作，把结果写入rd寄存器中 |
-| not | `not rd, rs` | 按位取反指令 <br> 对rs寄存器按位进行取反操作，把结果写入rd寄存器中，该指令是伪指令，内部使用 "xori rd, rs, -1" |
+| `and` | `and rd, rs1, rs2` | 与操作指令 <br> 对rs1和rs2寄存器按位进行与操作，把结果写入rd寄存器中 |
+| `andi` | `andi rd, rs1, imm` | 与操作指令 <br> 对rs1寄存器和imm按位进行与操作，把结果写入rd寄存器中 |
+| `or` | `or rd, rs1, rs2` | 或操作指令 <br> 对rs1寄存器和rs2寄存器按位进行或操作，把结果写入rd寄存器中 |
+| `ori` | `ori rd, rs1, imm` | 或操作指令 <br> 对rs1寄存器和imm按位进行或操作，把结果写入rd寄存器中 |
+| `xor` | `xor rd, rs1, rs2` | 异或操作指令 <br> 对rs1寄存器和rs2寄存器按位进行异或操作，把结果写入rd寄存器中 |
+| `xori` | `xori rd, rs1, imm` | 异或操作指令 <br> 对rs1寄存器和imm按位进行异或操作，把结果写入rd寄存器中 |
+| `not` | `not rd, rs` | 按位取反指令 <br> 对rs寄存器按位进行取反操作，把结果写入rd寄存器中，该指令是伪指令，内部使用 "xori rd, rs, -1" |
 
 ## 算数指令
 
 | 指令 | 指令格式 | 说明 |
 |------|----------|------|
-| add | add rd, rs1, rs2 | 加法指令 <br> 将rs1寄存器的值与rs2寄存器的值相加，把结果写入rd寄存器中 |
-| addi | addi rd, rs1, imm | 加法指令 <br> 将rs1寄存器与imm相加，把结果写入rd寄存器中 |
-| addw | addw rd, rs1, rs2 | 加法指令 <br> 截取rs1和rs2寄存器的低32位数据作为源操作数并相加，结果载取低32位，最后进行符号扩展并写入rd寄存器中 |
-| addiw | addiw rd, rs1, imm | 加法指令 <br> 截取rs1寄存器的低32位数据为源操作数，加上imm，对结果进行符号扩展并写入rd寄存器中 |
-| sub | sub rd, rs1, rs2 | 减法指令 <br> 将rs1寄存器的值减去rs2寄存器的值，把结果写入rd寄存器中 |
-| subw | subw rd, rs1, rs2 | 减法指令 <br> 截取rs1和rs2寄存器的低32位数据作为源操作数，然后新的rs1值减去新的rs2值，结果载取低32位，最后进行符号扩展并写入rd寄存器中 |
+| `add` | `add rd, rs1, rs2` | 加法指令 <br> 将rs1寄存器的值与rs2寄存器的值相加，把结果写入rd寄存器中 |
+| `addi` | `addi rd, rs1, imm` | 加法指令 <br> 将rs1寄存器与imm相加，把结果写入rd寄存器中 |
+| `addw` | `addw rd, rs1, rs2` | 加法指令 <br> 截取rs1和rs2寄存器的低32位数据作为源操作数并相加，结果载取低32位，最后进行符号扩展并写入rd寄存器中 |
+| `addiw` | `addiw rd, rs1, imm` | 加法指令 <br> 截取rs1寄存器的低32位数据为源操作数，加上imm，对结果进行符号扩展并写入rd寄存器中 |
+| `sub` | `sub rd, rs1, rs2` | 减法指令 <br> 将rs1寄存器的值减去rs2寄存器的值，把结果写入rd寄存器中 |
+| `subw` | `subw rd, rs1, rs2` | 减法指令 <br> 截取rs1和rs2寄存器的低32位数据作为源操作数，然后新的rs1值减去新的rs2值，结果载取低32位，最后进行符号扩展并写入rd寄存器中 |
 
 ![alt text](/doc/img/chapter3/img_3.png)
 
@@ -208,17 +208,17 @@ addi  a0, a0, 0x678   # a0 = a0 + 0x678（正数）
 
 | 指令 | 指令格式 | 说明 |
 |------|----------|------|
-| slt | `slt rd, rs1, rs2` | 有符号数比较指令 <br> 比较rs1寄存器和rs2寄存器的值，如果rs1寄存器的值小于rs2寄存器的值，向rd寄存器写1，否则写0 |
-| sltu | `sltu rd, rs1, rs2` | 无符号数比较指令 <br> 等同于slt指令，区别在于rs1寄存器的值和rs2寄存器的值为无符号数 |
-| slti | `slti rd, rs1, imm` | 有符号数与立即数比较指令 <br> 比较rs1寄存器的值与imm，如果rs1寄存器的值小于imm，向rd寄存器写1，否则写0 |
-| sltiu | `sltiu rd, rs1, imm` | 无符号数与立即数比较指令 <br> 如果rs1寄存器的值小于imm，向rd寄存器写1，否则写0 |
+| `slt` | `slt rd, rs1, rs2` | 有符号数比较指令 <br> 比较rs1寄存器和rs2寄存器的值，如果rs1寄存器的值小于rs2寄存器的值，向rd寄存器写1，否则写0 |
+| `sltu` | `sltu rd, rs1, rs2` | 无符号数比较指令 <br> 等同于slt指令，区别在于rs1寄存器的值和rs2寄存器的值为无符号数 |
+| `slti` | `slti rd, rs1, imm` | 有符号数与立即数比较指令 <br> 比较rs1寄存器的值与imm，如果rs1寄存器的值小于imm，向rd寄存器写1，否则写0 |
+| `sltiu` | `sltiu rd, rs1, imm` | 无符号数与立即数比较指令 <br> 如果rs1寄存器的值小于imm，向rd寄存器写1，否则写0 |
 
 | 指令 | 指令格式 | 说明 |
 |------|----------|------|
-| sltz | `sltz rd, rs1` | 小于0则置位指令 <br> 如果rs1寄存器的值小于0，向rd寄存器写1；否则，写0 |
-| snez | `snez rd, rs1` | 不等于0则置位指令 <br> 如果rs1寄存器的值不等于0，向rd寄存器写1；否则，写0 |
-| seqz | `seqz rd, rs1` | 等于0则置位指令 <br> 如果rs1寄存器的值等于0，向rd寄存器写1；否则，写0 |
-| sgtz | `sgtz rd, rs1` | 大于0则置位指令 <br> 如果rs1寄存器的值大于0，向rd寄存器写1；否则，写0 |
+| `sltz` | `sltz rd, rs1` | 小于0则置位指令 <br> 如果rs1寄存器的值小于0，向rd寄存器写1；否则，写0 |
+| `snez` | `snez rd, rs1` | 不等于0则置位指令 <br> 如果rs1寄存器的值不等于0，向rd寄存器写1；否则，写0 |
+| `seqz` | `seqz rd, rs1` | 等于0则置位指令 <br> 如果rs1寄存器的值等于0，向rd寄存器写1；否则，写0 |
+| `sgtz` | `sgtz rd, rs1` | 大于0则置位指令 <br> 如果rs1寄存器的值大于0，向rd寄存器写1；否则，写0 |
 
 ## 无条件跳转指令
 
@@ -236,13 +236,13 @@ JALR（Jump And Link Register，跳转与链接寄存器）指令使用I类型�
 
 | 伪指令 | 指令组合 | 说明 |
 |--------|----------|------|
-| j label | `jal x0, offset` | 跳转到label处，不带返回地址 <br> 使用jal指令但不保存返回地址（目标寄存器为x0，即零寄存器） |
-| jal label | `jal ra, offset` | 跳转到label处，返回地址存储在ra寄存器中 |
-| jr rs | `jalr x0, 0(rs)` | 跳转到rs寄存器中的地址址，不带返回地址 |
-| jalr rs | `jalr ra, 0(rs)` | 跳转到rs寄存器中的地址，返回地址存储在ra寄存器中 |
-| ret | `jalr x0, 0(ra)` | 从ra寄存器中获取返回地址，并返回，常用于子函数返回 |
-| call func | `auipc ra, offset[31:12] + offset[11]` <br> `jalr ra, offset[11:0](ra)` | 调用子函数func，返回地址保存到ra寄存器中 |
-| tail func | `auipc x6, offset[31:12] + offset[11]` <br> `jalr x0, offset[11:0](x6)`| 调用子函数func，不保存返回地址 |
+| `j label` | `jal x0, offset` | 跳转到label处，不带返回地址 <br> 使用jal指令但不保存返回地址（目标寄存器为x0，即零寄存器） |
+| `jal label` | `jal ra, offset` | 跳转到label处，返回地址存储在ra寄存器中 |
+| `jr rs` | `jalr x0, 0(rs)` | 跳转到rs寄存器中的地址址，不带返回地址 |
+| `jalr rs` | `jalr ra, 0(rs)` | 跳转到rs寄存器中的地址，返回地址存储在ra寄存器中 |
+| `ret` | `jalr x0, 0(ra)` | 从ra寄存器中获取返回地址，并返回，常用于子函数返回 |
+| `call func` | `auipc ra, offset[31:12] + offset[11]` <br> `jalr ra, offset[11:0](ra)` | 调用子函数func，返回地址保存到ra寄存器中 |
+| `tail func` | `auipc x6, offset[31:12] + offset[11]` <br> `jalr x0, offset[11:0](x6)`| 调用子函数func，不保存返回地址 |
 
 ## 条件跳转指令
 
@@ -250,14 +250,14 @@ JALR（Jump And Link Register，跳转与链接寄存器）指令使用I类型�
 
 | 指令 | 指令格式 | 说明 |
 |------|----------|------|
-| beq | `beq rs1, rs2, label` | 相等分支指令 <br> 如果rs1寄存器和rs2寄存器的值相等，则跳转到label处 |
-| bne | `bne rs1, rs2, label` | 不相等分支指令 <br> 如果rs1寄存器和rs2寄存器的值不相等，则跳转到label处 |
-| blt | `blt rs1, rs2, label` | 有符号数小于分支指令 <br> 如果rs1寄存器的值小于rs2寄存器的值，则跳转到label处 |
-| bltu | `bltu rs1, rs2, label` | 无符号数小于分支指令 <br> 与blt指令类似，但rs1寄存器的值和rs2寄存器的值为无符号数 |
-| bgt | `bgt rs1, rs2, label` | 有符号数大于分支指令 <br> 如果rs1寄存器的值大于rs2寄存器的值，则跳转到label处 |
-| bgtu | `bgtu rs1, rs2, label` | 无符号数大于分支指令 <br> 与bgt指令类似，但rs1寄存器的值和rs2寄存器的值为无符号数 |
-| bge | `bge rs1, rs2, label` | 有符号数大于等于分支指令 <br> 如果rs1寄存器的值大于或等于rs2寄存器的值，则跳转到label处 |
-| bgeu | `bgeu rs1, rs2, label` | 无符号数大于等于分支指令 <br> 与bge指令类似，但rs1寄存器的值和rs2寄存器的值为无符号数 |
+| `beq` | `beq rs1, rs2, label` | 相等分支指令 <br> 如果rs1寄存器和rs2寄存器的值相等，则跳转到label处 |
+| `bne` | `bne rs1, rs2, label` | 不相等分支指令 <br> 如果rs1寄存器和rs2寄存器的值不相等，则跳转到label处 |
+| `blt` | `blt rs1, rs2, label` | 有符号数小于分支指令 <br> 如果rs1寄存器的值小于rs2寄存器的值，则跳转到label处 |
+| `bltu` | `bltu rs1, rs2, label` | 无符号数小于分支指令 <br> 与blt指令类似，但rs1寄存器的值和rs2寄存器的值为无符号数 |
+| `bgt` | `bgt rs1, rs2, label` | 有符号数大于分支指令 <br> 如果rs1寄存器的值大于rs2寄存器的值，则跳转到label处 |
+| `bgtu` | `bgtu rs1, rs2, label` | 无符号数大于分支指令 <br> 与bgt指令类似，但rs1寄存器的值和rs2寄存器的值为无符号数 |
+| `bge` | `bge rs1, rs2, label` | 有符号数大于等于分支指令 <br> 如果rs1寄存器的值大于或等于rs2寄存器的值，则跳转到label处 |
+| `bgeu` | `bgeu rs1, rs2, label` | 无符号数大于等于分支指令 <br> 与bge指令类似，但rs1寄存器的值和rs2寄存器的值为无符号数 |
 
 ![条件跳转指令](/doc/img/chapter3/img_7.png)
 
@@ -329,3 +329,4 @@ RISC-V支持长距离寻址和短距离寻址。
 ## 参考链接
 
 + [https://doc.rust-lang.org/reference/inline-assembly.html](https://doc.rust-lang.org/reference/inline-assembly.html)
++ [https://michaeljclark.github.io/asm.html](https://michaeljclark.github.io/asm.html)
