@@ -3,12 +3,17 @@
 #![feature(stmt_expr_attributes)]
 
 mod console;
-mod lazy_items;
+mod driver;
 mod unit_3;
+mod lazy_items;
+
+use crate::{console::shutdown, lazy_items::print_logo};
 
 unsafe fn rust_entry(hartid: usize, dtb: usize) {
-    unit_3::lab_1();
-    unit_3::lab_2();
-    println!("Hello, world!");
-    println!("hartid = {}, dtb = {:#x}", hartid, dtb);
+    print_logo();
+
+    unit_3::unit_test();
+    
+
+    shutdown();
 }

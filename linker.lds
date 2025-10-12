@@ -10,7 +10,7 @@ SECTIONS
 
     .text : ALIGN(4K) {
         _stext = .;
-        *(.text.boot)
+        *(.text.entry)
         *(.text .text.*)
         . = ALIGN(4K);
         _etext = .;
@@ -35,21 +35,20 @@ SECTIONS
     }
 
     .bss : ALIGN(4K) {
-        boot_stack = .;
-        . += 256K;
-        boot_stack_top = .;
-
-        _sbss = .;
-
-        boot_page_table = .;
-        . += 4K;
-        boot_page_table_end = .;
-
+        _sbss = .;              /* BSS起始 */
         *(.bss .bss.*)
         *(.sbss .sbss.*)
         *(COMMON)
         . = ALIGN(4K);
-        _ebss = .;
+        _ebss = .;              /* BSS结束 */
+
+        boot_stack = .;
+        . += 256K;
+        boot_stack_top = .;
+        
+        boot_page_table = .;
+        . += 4K;
+        boot_page_table_end = .;
     }
 
     _ekernel = .;

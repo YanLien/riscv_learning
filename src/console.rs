@@ -1,4 +1,5 @@
 use core::fmt::{Error, Write};
+use sbi_rt::{NoReason, Shutdown, system_reset};
 
 pub fn putchar(c: u8) {
     #[allow(deprecated)]
@@ -42,4 +43,9 @@ macro_rules! print {
     ($($arg:tt)*) => {
         $crate::console::__print_impl(format_args!($($arg)*));
     }
+}
+
+pub fn shutdown() {
+    println!("Shutting down...");
+    system_reset(Shutdown, NoReason);
 }
