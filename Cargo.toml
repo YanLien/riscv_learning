@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
 log = "0.4.28"
+
+[profile.release]
+debug = true
