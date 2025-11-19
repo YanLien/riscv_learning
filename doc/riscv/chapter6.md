@@ -45,3 +45,216 @@ ld命令的常用选项如下表所示。
 ## 链接脚本
 
 链接器在链接过程中需要使用链接脚本，当没有通过-T选项指定链接脚本时，链接器会使用内置的链接脚本。链接脚本控制如何把输入文件的段整合到输出文件的段里，以及这些段的地址空间布局等。
+
+## 链接脚本
+
+```
+SECTIONS {
+    sections-command
+    sections-command
+    ...
+}
+```
+
+sections-command有如下几种。
++ `ENTRY`命令，用来设置程序的入口。
++ 符号赋值语句，用来给符号赋值。
++ 输出段的描述语句。
+
+### 设置入口点
+
+程序执行的第一条指令称为入口点(entry point)。
+
++ 在链接脚本中，使用ENTRY命令设置程序的入口点。链接器会依次尝试下列方法来设置入口点，直到成功为止。
+    ```
+    ENTRY(symbol)
+    ```
++ 使用GCC工具链的LD命令和-e选项设置入口点。
++ 通过特定符号（如start）设置入口点。
++ 使用代码段的起始地址。
++ 使用地址0。
+
+在链接脚本中，把输入文件中的段称为输入段(input section)，把输出文件中的段称为输出段(output section)。输出段告诉链接器最终的可执行文件在内存中是如何布局的，输入段告诉链接器如何将输入文件映射到内存布局。
+
+输出段和输入段包括段的名字、大小、可加载(loadable)属性以及可分配(allocatable)属性等。可加载属性用于在运行时将这些段的内容加载到内存中。可分配属性用于在内存中预留一个区域，这个区域的内容不会被加载。
+
+> “不会被加载”指的是：在硬盘上的程序文件中，这个段不占用或只占用极少的文件空间，因此当程序启动时，操作系统几乎没有（或只有极少）数据需要从硬盘文件复制到这个段对应的内存区域。
+
+链接脚本中还有两个关于段的地址，它们分别是加载地址和虚拟地址。加载地址是加载时段所在的地址；虚拟地址是运行时段所在的地址，也称为运行地址。通常情况下，这两个地址是相同的。
++ 加载地址是加载时段所在的地址。
++ 虚拟地址是运行时段所在的地址。
+
+```
+// 链接脚本示例
+.data 0x20000000 : AT(0x08010000) {
+    *(.data)
+}
+```
++ LMA = 0x08010000 (数据存储在Flash ROM中)
++ VMA = 0x20000000 (运行时数据要在RAM中)
+
+```
+// 链接脚本
+.text 0x08000000 : {
+    *(.text)
+}
+```
++ 代码加载到 0x08000000
++ CPU也在 0x08000000 执行代码
+
+### 符号赋值与引用
+
+``` asm
+symbol = expression ;
+symbol += expression ;
+symbol -= expression ;
+symbol *= expression ;
+symbol /= expression ;
+symbol <<= expression ;
+symbol >>= expression ;
+symbol&= expression ;
+symbol |= expression ;
+```
+
+在链接脚本中，符号可以进行赋值和操作，允许的操作包括赋值、加法、减法、乘法、除法、左移、右移、与、或等。注意赋值语句后面要添加分号，否则会编译错误。
+
+### 当前位置计数器
+
+有一个特殊的符号“.”​，它表示当前位置计数器。
+
+### SECTIONS命令
+
+SECTIONS命令告诉链接器如何把输入段映射到输出段，以及如何在内存中存放这些输出段。
+
+输出段的描述格式如下
+
+```
+section [address] [(type)] :
+[AT(lma)]
+[ALIGN(section_align)]
+[constraint]
+{
+  output-section-command
+  output-section-command
+  ...
+} [>region] [AT>lma_region] [:phdr :phdr ...] [=fillexp]
+```
+
++ section：段的名字，如.text、.data等。
++ address：虚拟地址。
++ type：输出段的属性。
++ lma：加载地址。
++ ALIGN：对齐要求。
++ output-section-command：描述输入段如何映射到输出段。
++ region：特定的内存区域。
++ phdr：特定的程序段(program segment)。
+
+> 一个输出段有两个地址，分别是虚拟内存地址(Virtual MemoryAddress, VMA)和加载内存地址(Load Memory Address, LMA)。如果没有通过“AT”指定LMA，那么LMA = VMA，即加载地址等于虚拟地址。
+
+输入段用来告诉链接器如何将输入文件映射到内存布局。输入段包括输入文件以及对应的段。通常，使用通配符来包含某些特定的段
+
+```
+*(.text)
+```
+这里的“*”是一个通配符，可以匹配任何文件名的代码段。另外，如果想从所有文件中剔除一些文件，可以使用EXCLUDE_FILE命令列出哪些文件是需要剔除的，剩余的文件用作输入段
+
+要指定文件名中特定的段
+```
+data.o(.data)
+```
+
+```
+EXCLUDE_FILE (*crtend.o *otherfile.o) *(.ctors)
+```
+在上面的代码中，除crtend.o和otherfile.o文件之外，剩余文件的ctors段都将加入输入段。
+
+```
+写法1: *(.text .rodata)
+┌─────────────────┐
+│ main.o .text    │
+│ main.o .rodata  │  ← 同一文件的段连在一起
+├─────────────────┤
+│ utils.o .text   │
+│ utils.o .rodata │  ← 同一文件的段连在一起
+└─────────────────┘
+
+写法2: *(.text) *(.rodata)
+┌─────────────────┐
+│ main.o .text    │
+│ utils.o .text   │  ← 所有 .text 先放
+├─────────────────┤
+│ main.o .rodata  │
+│ utils.o .rodata │  ← 所有 .rodata 后放
+└─────────────────┘
+```
+
+
+```
+*(EXCLUDE_FILE (*somefile.o) .text .rodata)
+*(EXCLUDE_FILE (*somefile.o) .text EXCLUDE_FILE (*somefile.o) .rodata)
+```
+
+
+``` ld
+*(
+    EXCLUDE_FILE (*somefile.o) .text    # 其他文件的 .text
+                               .rodata  # 所有文件的 .rodata
+)
+*(
+    EXCLUDE_FILE (*somefile.o) .text     # 排除 somefile.o 的 .text
+    EXCLUDE_FILE (*somefile.o) .rodata   # 排除 somefile.o 的 .rodata
+)
+```
+
+### 内置函数
+
++ `ABSOLUTE(exp)`返回表达式的绝对值，主要用于在段定义中给符号赋绝对值。
+    ```
+    SECTIONS {
+        . = 0xb0000,
+        .my_offset : {
+                my_offset1 = ABSOLUTE(0x100);
+                my_offset2 = (0x100);
+        }
+    }
+    ```
+    > 符号`my_offset1`使用了`ABSOLUTE(exp)`内置函数，它把数值`0x100`赋给符号`my_offset1`；而符号`my_offset2`没有使用此内置函数，因此符号`my_offset2`属于`.my_offset`段里的符号，于是符号`my_offset2`的地址为`0xB0000 + 0x100`
++ `ADDR(section)`返回段的虚拟地址。
++ `ALIGN(align)`返回下一个与align字节对齐的地址，它是基于当前位置来计算对齐地址的。
++ `SIZEOF(section)`返回一个段的大小。
++ `PROVIDE()`内置函数从链接脚本中导出一个符号，**只有当这个符号在其他地方没有被定义并且没有被链接时才会使用**。
++ `INCLUDE()`函数可以引入另外的链接脚本。
+    ```
+    SECTIONS {
+        INCLUDE "sbi/sbi_base.ld"
+    }
+    ```
++ `LOADADDR(section)`：返回段的加载地址。
++ `MAX(exp1, exp2)`：返回两个表达式中的最大值。
++ `MIN(exp1, exp2)`：返回两个表达式中的最小值。
+
+### 加载重定位
+
++ 加载地址：存储代码的物理地址，在GNU链接脚本里称为LMA。
++ 运行地址：程序运行时的地址，在GNU链接脚本里称为VMA。
++ 链接地址：在编译、链接时指定的地址，编程人员设想的程序将来要运行的地址。程序中所有标号的地址在链接后便确定了，不管程序在哪里运行都不会改变。
+
+位置无关的指令：从字面意思看，指令的执行是与内存地址无关的；无论运行地址和链接地址相不相同，该指令都能正常运行。在汇编语言中，像J、JAL、MV等指令便属于位置无关的指令，
+
+不管程序在哪个位置，它们都能正确地运行，指令的地址属性是基于PC值相对寻址的，相当于`[PC+offset]`​。
+
+位置有关的指令：从字面意思看，指令的执行是与内存地址有关的，和当前PC值无关。在RISC-V汇编语言里，通过修改ra寄存器的值实现相对跳转。
+
+如果通过修改返回地址为链接地址，当函数返回时，就会跳转到链接地址处。这个过程叫作重定位。在重定位之前，程序只能执行和位置无关的汇编代码。
+
+### 链接重定位与链接器松弛优化
+
+链接阶段有一种优化技术——链接器松弛优化(linker relaxationoptimization)，它旨在减少不必要的指令。
+
+对于RISC-V处理器来说，链接器松弛优化技术主要涉及两方面。
++ 函数跳转优化
++ 符号地址访问优化
+
+> gcc的选项
+> + --save-temps表示保留编译过程中产生的所有中间文件
+> + -mno-relax表示关闭链接器松弛优化。

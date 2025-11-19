@@ -9,3 +9,7 @@ log = "0.4.28"
 
 [profile.release]
 debug = true
+
+[profile.dev]
+opt-level = 0
+debug = true

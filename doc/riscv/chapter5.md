@@ -97,3 +97,23 @@ ld --verbose
 + `.DWORD`：把64位数当成数据插入汇编代码中。
 + `.OPTION`：修改特定汇编代码的汇编选项。
 
+> 注：
+> .type 指示符
+> `.type find_max, @function`
+> 作用：告诉汇编器和链接器 find_max 是一个函数符号
+> 语法：.type symbol, type
+> 常见类型：
+> 
+> @function - 函数
+> @object - 数据对象（变量）
+> @notype - 无类型
+> 
+> .size 指示符
+> `.size find_max, .-find_max`
+> 作用：指定符号的大小（字节数）
+> 语法：`.size symbol, expression`
+> . 的含义：当前位置计数器（location counter）
+> .-find_max 的含义：当前位置 - find_max 标签位置 = 函数大小
+> .altmacro 启用了一套更强大、更灵活的宏语法，扩展了传统宏的功能。
+> 
+> 

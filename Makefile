@@ -1,12 +1,12 @@
 TARGET = riscv64gc-unknown-none-elf
-TARGET_DIR = target/$(TARGET)/release
+TARGET_DIR = target/$(TARGET)/debug
 KERNEL_ELF = $(TARGET_DIR)/riscv_learning
 KERNEL_BIN = $(TARGET_DIR)/kernel.bin
 GDB_PORT = 1234
 
 build: 
 	@echo "Building for target: $(TARGET)"
-	@cargo build --target $(TARGET) --release
+	@cargo build --target $(TARGET) 
 	@echo "Creating binary kernel image"
 	@rust-objcopy --binary-architecture=riscv64 --strip-all -O binary \
 		$(TARGET_DIR)/riscv_learning \

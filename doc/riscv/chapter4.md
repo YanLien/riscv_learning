@@ -159,3 +159,33 @@
 + 复用当前函数的栈帧，而不是为被调用函数创建新的栈帧。
 + 在跳转到被调用函数之前，根据需要设置好参数。
 + 直接使用 j（跳转）指令或 jalr（跳转并链接寄存器）指令，而不是 call（它实际上是 auipc + jalr 的伪指令）来跳转到目标函数。
+
+## GDB连接
+
+``` shell
+qemu-system-riscv64 -m 128M -machine virt -bios default -nographic \
+		-kernel $(TARGET_DIR)/kernel.bin \
+    	-D qemu.log -d in_asm -S -s
+```
+
+`-s`：启动 GDB 调试服务器
++ 在 1234 端口 开启 GDB 调试
++ 等价于 `-gdb tcp::1234`
++ GDB 可以通过 `target remote :1234` 连接
++ 将端口改为 1235 => `tcp::1235`,`tcp::localhost:1235`
+
+`-S`：启动时暂停 CPU
++ 在启动时立即暂停 CPU 执行
++ 等待 GDB 发送 continue 命令才开始运行
++ 确保你不会错过任何早期指令
+
+``` shell
+riscv64-unknown-elf-gdb \
+    -ex 'file $(KERNEL_ELF)' \ 
+    -ex 'set arch riscv:rv64'  \
+    -ex 'target remote localhost:1234'
+```
+
+`file user_program` 只是加载符号
++ 告诉 GDB："如果看到这个程序的代码，请这样解析"
++ 并不实际启动程序

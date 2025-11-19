@@ -1,7 +1,6 @@
 use core::arch::global_asm;
 use crate::println;
 
-
 global_asm!(include_str!("load.S"));
 global_asm!(include_str!("pc_address.S"));
 global_asm!(include_str!("memset.S"));
