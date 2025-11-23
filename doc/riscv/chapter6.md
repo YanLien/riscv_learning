@@ -249,12 +249,74 @@ EXCLUDE_FILE (*crtend.o *otherfile.o) *(.ctors)
 
 ### 链接重定位与链接器松弛优化
 
+编译阶段生成的可重定位目标文件中的所有符号的地址都暂时设定为`0x0`
+
 链接阶段有一种优化技术——链接器松弛优化(linker relaxationoptimization)，它旨在减少不必要的指令。
 
 对于RISC-V处理器来说，链接器松弛优化技术主要涉及两方面。
 + 函数跳转优化
 + 符号地址访问优化
 
-> gcc的选项
-> + --save-temps表示保留编译过程中产生的所有中间文件
-> + -mno-relax表示关闭链接器松弛优化。
+RISC-V常用的重定位类型
+| 编号 | 重定位类型 | 说明 | 计算公式 |
+| ---- | -------- | ----- | ------ |
+| 18 | `R_RISCV_CALL` | 函数调用，用于CALL和TAIL指令 | S+A-P |
+| 23 | `R_RISCV_PCREL_HI20` | PC相对寻址(高20位部分) | S+A-P |
+| 24 | `R_RSICV_PCREL_LO12_I` | PC相对寻址(低12位部分)，用于加载指令 | S-P |
+| 25 | `R_RSICV_PCREL_LO12_S` | PC相对寻址(低12位部分)，用于存储指令 | S-P |
+| 26 | `R_RISCV_HI20` | 绝对地址寻址(高20位部分) | S+A | 
+| 27 | `R_RISCV_LO12_I` | 绝对地址寻址(低12位部分)，用于加载指令 | S+A | 
+| 28 | `R_RISCV_LO12_S` | 绝对地址寻址(高12位部分)，用于存储指令 | S+A |
+| 51 | `R_RISCV_RELAX` | 表示指令会被链接器松弛优化 | - |
+
++ S：符号的最终链接地址。
++ A：需要额外附加(appended)的字节数。
++ P：重定位的位置，即重定位的那条指令的PC值。
+
+```
+# riscv64-linux-gnu-objdump -r test.o
+
+test.o:    file format elf64-littleriscv
+
+RELOCATION RECORDS FOR [.text]:
+OFFSET           TYPE                 VALUE
+0000000000000006 R_RISCV_PCREL_HI20    a
+000000000000000a R_RISCV_PCREL_LO12_I  .L0
+0000000000000020 R_RISCV_CALL          foo
+```
+
++ `RELOCATION RECORDS FOR [.text]`表示下面的信息是代码段的重定位表。
++ `OFFSET`表示要重定位的相对地址。表示需要重定位的指令在该段中的字节偏移地址。例如，6表示代码段偏移0x6的地方。
++ `TYPE`表示重定位的类型。指示链接器应该如何修正这个位置
++ `VALUE`表示要重定位的符号。表示重定位引用的符号(变量名或函数名)
+
+## 函数跳转优化
+
+`CALL`指令的跳转范围为32位有符号数的地址区间，即以当前PC值为基地址的`±2GB`区间。另外，RISC-V指令集还支持一种短跳转模式，`JAL`是短跳转指令，只能在21位有符号数的地址区间中跳转，对应以当前PC值为基地址的 `±1MB` 区间。
+
+CALL FUN指令等价于以下两条指令。
+
+```
+auipc ra, 0
+jalr  ra, ra, 0
+```
+
+```
+jal offset
+```
+其中，offset为调用fun()函数时PC值与fun()函数地址之间的偏移量。
+
+> `gcc`的选项
+> + `--save-temps`表示保留编译过程中产生的所有中间文件
+> + `-mno-relax`表示关闭链接器松弛优化。
+> + `-mrelax`：使能链接器松弛优化，GCC默认使能该选项。
+> + `-mno-relax`：关闭链接器松弛优化。
+
+## 符号地址访问优化
+
+```
+auipc a0, %pcrel_hi(sym)
+addi a0, a0, %pcrel_lo (sym)
+```
+
+使用全局指针(Global Pointer, GP)寄存器，它指向数据段（`.sdata`段）中的一个地址。如果全局变量存储在以这个GP寄存器的值为基地址的`±2KB`范围内，那么链接器就能够优化对全局变量的访问，`AUIPC`指令与`ADDI`指令的组合可以替换成对以GP寄存器的值为基地址的相对寻址。
