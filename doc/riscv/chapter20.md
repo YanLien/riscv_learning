@@ -269,7 +269,38 @@ RISC-V虚拟化扩展提供了两种模式：一种是虚拟化模式；另一�
 
 ## 异常陷入
 
+当异常/中断发生在HS模式或者U模式时，默认先陷入M模式，除非在M模式下的SBI固件通过medeleg/mideleg寄存器把异常/中断委托给HS模式处理。当异常/中断发生在VS模式或者VU模式时，默认先陷入M模式，除非在M模式下的SBI固件通过medeleg/mideleg寄存器把异常/中断委托给HS模式处理，进一步可以在HS模式下配置hedeleg/hideleg寄存器以把异常/中断委托给VS模式处理。
 
+| 陷入源模式 | 虚拟化状态 | MPV | MPP | 状态字 |
+|------------|------------|-----|-----|--------|
+| U模式      | V=0        | 0   | 00  | 0x000  |
+| HS模式     | V=0        | 0   | 01  | 0x001  |
+| M模式      | V=0        | 0   | 11  | 0x003  |
+| VU模式     | V=1        | 1   | 00  | 0x100  |
+| VS模式     | V=1        | 1   | 01  | 0x101  |
+
+当一个异常/中断陷入M模式时，mstatus寄存器中MPV字段与MPP字段的值如上表所示。当陷入M模式时，处理器还会改写mstatus寄存器的GVA字段、mstatus寄存器中的MPEI/MIE字段，以及mepc、mcause、mtval、mtval2和mtinst等系统寄存器的字段。
+
+| 陷入源模式 | 虚拟化状态 | SPV | SPP | 说明 |
+|------------|------------|-----|-----|------|
+| U模式      | V=0        | 0   | 0   | 用户程序异常 |
+| HS模式     | V=0        | 0   | 1   | 监管模式自陷 |
+| VU模式     | V=1        | 1   | 0   | 虚拟机用户异常 |
+| VS模式     | V=1        | 1   | 1   | 虚拟机监管异常 |
+
+当一个异常/中断陷入HS模式时，hstatus寄存器中SPV字段和sstatus寄存器中SPP字段的值如上表所示。如果从VU/VS模式陷入HS模式，hstatus寄存器中SPVP字段的内容与sstatus寄存器的SPP字段相同。当陷入HS模式时，处理器还会改写hstatus寄存器的GVA字段、sstatus寄存器中的SPEI/SIE字段，以及sepc、scause、stval、htval和htinst等系统寄存器的字段。
+
+当一个异常/中断陷入VS模式时，V模式依然保持不变，vsstatus寄存器的SPP字段记录了发生异常/中断前的处理器模式。例如，0表示VU模式，1表示VS模式。若陷入VS模式时，处理器还会改写sstatus寄存器中的SPEI/SIE字段，以及vsepc、vscause、vstval等系统寄存器的字段。
+
+### 异常返回
+
+MRET指令用于从M模式返回。mstatus寄存器中的MPP字段记录了将要返回的处理器模式。MRET指令执行完后自动设置MPV=0、MPP=0、MIE=MPIE、MPIE=1，最后跳转到MPP字段保存的处理器模式并设置pc=mepc。
+
+SRET指令用于从HS模式或者VS模式返回。
+
+当处理器在非虚拟化模式(V=0)时，SRET要跳转的模式由hstatus寄存器中的SPV字段以及sstatus寄存器中的SPP字段确定。SRET指令执行时会自动设置hstatus.SPV=0，并修改sstatus寄存器中的SPP=0、SIE=SPIE、SPIE=1，最后跳转新的处理器模式并设置pc=sepc。
+
+当处理器在虚拟化模式(V=1)时，SRET要跳转的模式由vsstatus寄存器中的SPP字段确定。SRET指令执行时会自动修改vsstatus寄存器中的相应字段，即SPP=0、SIE=SPIE、SPIE=1，最后跳转到新的处理器模式并设置pc=vsepc。
 
 ## 中断虚拟化
 
