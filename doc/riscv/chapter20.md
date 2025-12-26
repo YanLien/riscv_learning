@@ -63,11 +63,11 @@
 ### CPU虚拟化扩展
 
 + S模式的扩展。把原有的S模式扩展为HS(Hypervisor-extended Supervisor)模式，它可以运行VMM，也可以运行主机操作系统，从而完美、无缝地支持第一类VMM以及第二类VMM，如Xvisor和KVM。HS模式在原来S模式的基础上新增了一些指令以及系统寄存器。
-+ 新增处理器模式。新增了VS(virtual S)模式和VU(virtualU)模式，虚拟机操作系统运行在VS模式，虚拟机应用程序运行在VU模式。处理器模式的变化如图20.5所示。HS模式比VS模式拥有更高的资源管理权限，同理，VS模式比VU模式拥有更高的资源管理权限。
++ 新增处理器模式。新增了VS(virtual S)模式和VU(virtualU)模式，虚拟机操作系统运行在VS模式，虚拟机应用程序运行在VU模式。处理器模式的变化如图所示。HS模式比VS模式拥有更高的资源管理权限，同理，VS模式比VU模式拥有更高的资源管理权限。
 
 <img src="../img/chapter20/img-2.png" alt="alt text" width="50%">
 
-虚拟化扩展在系统寄存器方面做了如下扩展。
+### 虚拟化扩展在系统寄存器方面做了如下扩展。
 
 + 对M模式的部分系统寄存器做了扩展。
 + 在HS模式下新增了系统寄存器。运行在HS模式的VMM除使用S模式下原有的系统寄存器处理异常、中断、地址转换等功能之外，还新增了一系列在虚拟化场景下使用的系统寄存器，如hstatus、hedeleg等。
@@ -75,17 +75,17 @@
 
 若V=1，表示处理器运行在虚拟化模式，即在VS模式或者VU模式下；若V=0，表示处理器运行在非虚拟化模式，如M模式、HS模式或者U模式。另外，使用如下缩写表示不同模式下的系统寄存器。
 
-m<csr>表示M模式下的系统寄存器。
-s<csr>表示S模式下的系统寄存器。
-h<csr>表示HS模式下的系统寄存器。
-vs<csr>表示VS模式下的系统寄存器。
++ m<csr>表示M模式下的系统寄存器。
++ s<csr>表示S模式下的系统寄存器。
++ h<csr>表示HS模式下的系统寄存器。
++ vs<csr>表示VS模式下的系统寄存器。
 
 | 当前模式 | 访问的寄存器 | 实际访问的寄存器 | 说明 |
 |----------|--------------|------------------|------|
-| **HS模式** | `S<CSF>` | 原S模式系统寄存器 | 直接访问Supervisor模式的寄存器 |
-| **HS模式** | `h<CSF>` | HS模式专用寄存器 | 访问Hypervisor扩展的寄存器 |
-| **HS模式** | `VS<CSF>` | VS模式系统寄存器 | 访问虚拟Supervisor模式的寄存器 |
-| **VS模式** | `S<CSF>` | `VS<CSF>`寄存器 | 自动重定向到虚拟Supervisor寄存器 |
+| **HS模式** | `s<csr>` | 原S模式系统寄存器 | 直接访问Supervisor模式的寄存器 |
+| **HS模式** | `h<csr>` | HS模式专用寄存器 | 访问Hypervisor扩展的寄存器 |
+| **HS模式** | `vs<csr>` | VS模式系统寄存器 | 访问虚拟Supervisor模式的寄存器 |
+| **VS模式** | `s<csr>` | `vs<csr>`寄存器 | 自动重定向到虚拟Supervisor寄存器 |
 
 **mstatus寄存器**
 
@@ -238,7 +238,6 @@ hsv{x}.{b|h|w|d} rs2,  offset(rs1)    //虚拟化存储指令
 
 V=1 就表示当前正在 Guest 环境中执行（即 VS/VU 模式）
 
-
 ### 虚拟化内存屏障指令
 
 虚拟化扩展提供了两条与SFENCE.VMA类似的内存屏障指令。
@@ -267,28 +266,30 @@ RISC-V虚拟化扩展提供了两种模式：一种是虚拟化模式；另一�
 
 进入虚拟机：VMM可以通过配置hstatus寄存器中的SPV字段以及SPVP字段，然后执行SRET指令，切换到VS模式，于是虚拟机得以运行。退出虚拟机：虚拟机在运行过程中遇到需要VMM处理的事件，如外部中断或缺页异常，或者遇到主动调用ECALL指令（与系统调用类似）的情况，CPU自动挂起虚拟机，切换到非虚拟化模式，恢复VMM的运行。
 
-## 异常陷入
+### 异常陷入
 
 当异常/中断发生在HS模式或者U模式时，默认先陷入M模式，除非在M模式下的SBI固件通过medeleg/mideleg寄存器把异常/中断委托给HS模式处理。当异常/中断发生在VS模式或者VU模式时，默认先陷入M模式，除非在M模式下的SBI固件通过medeleg/mideleg寄存器把异常/中断委托给HS模式处理，进一步可以在HS模式下配置hedeleg/hideleg寄存器以把异常/中断委托给VS模式处理。
 
-| 陷入源模式 | 虚拟化状态 | MPV | MPP | 状态字 |
-|------------|------------|-----|-----|--------|
-| U模式      | V=0        | 0   | 00  | 0x000  |
-| HS模式     | V=0        | 0   | 01  | 0x001  |
-| M模式      | V=0        | 0   | 11  | 0x003  |
-| VU模式     | V=1        | 1   | 00  | 0x100  |
-| VS模式     | V=1        | 1   | 01  | 0x101  |
+当一个异常/中断陷入M模式时，mstatus寄存器中MPV字段与MPP字段的值如下表所示。当陷入M模式时，处理器还会改写mstatus寄存器的GVA字段、mstatus寄存器中的MPEI/MIE字段，以及mepc、mcause、mtval、mtval2和mtinst等系统寄存器的字段。
 
-当一个异常/中断陷入M模式时，mstatus寄存器中MPV字段与MPP字段的值如上表所示。当陷入M模式时，处理器还会改写mstatus寄存器的GVA字段、mstatus寄存器中的MPEI/MIE字段，以及mepc、mcause、mtval、mtval2和mtinst等系统寄存器的字段。
+当陷入M模式时mstatus寄存器中MPV字段与MPP字段的值
 
-| 陷入源模式 | 虚拟化状态 | SPV | SPP | 说明 |
-|------------|------------|-----|-----|------|
-| U模式      | V=0        | 0   | 0   | 用户程序异常 |
-| HS模式     | V=0        | 0   | 1   | 监管模式自陷 |
-| VU模式     | V=1        | 1   | 0   | 虚拟机用户异常 |
-| VS模式     | V=1        | 1   | 1   | 虚拟机监管异常 |
+| 陷入前的处理器模式 | MPV字段 | MPP字段 |
+|-------------------|---------|---------|
+| U模式              | 0       | 0       |
+| HS模式             | 0       | 1       |
+| M模式              | 0       | 3       |
+| VU模式             | 1       | 0       |
+| VS模式             | 1       | 1       |
 
-当一个异常/中断陷入HS模式时，hstatus寄存器中SPV字段和sstatus寄存器中SPP字段的值如上表所示。如果从VU/VS模式陷入HS模式，hstatus寄存器中SPVP字段的内容与sstatus寄存器的SPP字段相同。当陷入HS模式时，处理器还会改写hstatus寄存器的GVA字段、sstatus寄存器中的SPEI/SIE字段，以及sepc、scause、stval、htval和htinst等系统寄存器的字段。
+当一个异常/中断陷入HS模式时，hstatus寄存器中SPV字段和sstatus寄存器中SPP字段的值如表所示。如果从VU/VS模式陷入HS模式，hstatus寄存器中SPVP字段的内容与sstatus寄存器的SPP字段相同。当陷入HS模式时，处理器还会改写hstatus寄存器的GVA字段、sstatus寄存器中的SPEI/SIE字段，以及sepc、scause、stval、htval和htinst等系统寄存器的字段。
+
+| 陷入前的处理器模式 | hstatus寄存器中的SPV字段 | sstatus寄存器中的SPP字段 |
+|-------------------|-------------------------|-------------------------|
+| U模式           | 0                      | 0                     |
+| HS模式          | 0                      | 1                     |
+| VU模式          | 1                      | 0                     |
+| VS模式          | 1                      | 1                     |
 
 当一个异常/中断陷入VS模式时，V模式依然保持不变，vsstatus寄存器的SPP字段记录了发生异常/中断前的处理器模式。例如，0表示VU模式，1表示VS模式。若陷入VS模式时，处理器还会改写sstatus寄存器中的SPEI/SIE字段，以及vsepc、vscause、vstval等系统寄存器的字段。
 
@@ -298,29 +299,32 @@ MRET指令用于从M模式返回。mstatus寄存器中的MPP字段记录了将�
 
 SRET指令用于从HS模式或者VS模式返回。
 
-当处理器在非虚拟化模式(V=0)时，SRET要跳转的模式由hstatus寄存器中的SPV字段以及sstatus寄存器中的SPP字段确定。SRET指令执行时会自动设置hstatus.SPV=0，并修改sstatus寄存器中的SPP=0、SIE=SPIE、SPIE=1，最后跳转新的处理器模式并设置pc=sepc。
++ 当处理器在非虚拟化模式(V=0)时，SRET要跳转的模式由hstatus寄存器中的SPV字段以及sstatus寄存器中的SPP字段确定。SRET指令执行时会自动设置hstatus.SPV=0，并修改sstatus寄存器中的SPP=0、SIE=SPIE、SPIE=1，最后跳转新的处理器模式并设置pc=sepc。
++ 当处理器在虚拟化模式(V=1)时，SRET要跳转的模式由vsstatus寄存器中的SPP字段确定。SRET指令执行时会自动修改vsstatus寄存器中的相应字段，即SPP=0、SIE=SPIE、SPIE=1，最后跳转到新的处理器模式并设置pc=vsepc。
 
-当处理器在虚拟化模式(V=1)时，SRET要跳转的模式由vsstatus寄存器中的SPP字段确定。SRET指令执行时会自动修改vsstatus寄存器中的相应字段，即SPP=0、SIE=SPIE、SPIE=1，最后跳转到新的处理器模式并设置pc=vsepc。
+### 新增的中断与异常类型
 
-## 中断虚拟化
+虚拟中断，例如，EC字段为2、6以及10的中断。VS模式下的外设中断，例如，EC字段为12的中断。虚拟指令异常，例如，EC字段为22的异常。虚拟机缺页异常，例如，EC字段为20、21以及23的异常。来自VS模式的系统调用，例如，EC字段为10的异常。
+
+### 中断虚拟化
 
 RISC-V的中断虚拟化主要采用虚拟中断注入(virtualinterrupt inject)和陷入与模拟(trap and emulation)技术。
 
 虚拟中断注入RISC-V虚拟化扩展为支持中断虚拟化提供了虚拟中断注入。在HS模式下，hvip寄存器用来把虚拟中断注入虚拟机中。hvip寄存器，目前只有3个字段是可写的，其他位是只读的，并且默认值为0。
 
-![alt text](image.png)
+<img src="../img/chapter20/img-5.png" alt="alt text" width="50%">
 
 其中，VSSIP往虚拟机中注入一个软件中断，VSTIP往虚拟机中注入一个定时器中断，VSEIP往虚拟机中注入一个外 设中断。
 
 另外，RISC-V虚拟化扩展还提供hip和hie寄存器来辅助管理虚拟机中的中断待定状态与中断使能位。目前只有4个字段是可写的，其他位是只读的，并且默认值为0
 
-![alt text](image-1.png)
+<img src="../img/chapter20/img-6.png" alt="alt text" width="50%">
 
 其中，VSSIP表示虚拟机中有待定状态的软件中断，VSTIP表示虚拟机中有待定状态的定时器中断，VSEIP表示虚拟机中有待定状态的外设中断，SGEIP表示在HS模式中有待定状态的虚拟机外设中断。
 
 hie寄存器，目前只有4个字段是可写的，其他位是只读的，并且默认值为0。
 
-![alt text](image-2.png)
+<img src="../img/chapter20/img-7.png" alt="alt text" width="50%">
 
 其中，VSSIE表示虚拟机中的软件中断使能位，VSTIE表示虚拟机中的定时器中断使能位，VSEIE表示虚拟机中的外设中断使能位，SGEIE表示在HS模式的虚拟机外设中断使能位。
 
